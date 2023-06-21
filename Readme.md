@@ -28,13 +28,14 @@ Please cite our work if you find it useful in your research:
 ## Implemented Algorithms
 We provide PyTorch code for the following algorithms:
 - Maximum A Posteriori (MAP)
-- Monte Carlo Dropout (MCD)
-- Deep Ensembles
-- Bayes By Backprop (BBB)
-- Rank-1 Variational Inference (Rank-1 VI)
-- Stochastic Weight Averaging - Gaussian (SWAG)
-- Stein Variational Gradient Descent (SVGD)
-- Improved Variational Online-Newton (iVON)
+- [Monte Carlo Dropout](https://arxiv.org/abs/1506.02142) (MCD)
+- [Deep Ensembles](https://arxiv.org/abs/1612.01474)
+- [Bayes By Backprop](https://arxiv.org/abs/1505.05424) (BBB)
+- [Rank-1 Variational Inference](https://arxiv.org/abs/2005.07186) (Rank-1 VI)
+- [Stochastic Weight Averaging - Gaussian](https://arxiv.org/abs/1902.02476) (SWAG)
+- [Stein Variational Gradient Descent](https://arxiv.org/abs/1608.04471) (SVGD)
+- [Improved Variational Online-Newton](https://arxiv.org/abs/2002.10060) (iVON)
+- [Laplace Approximation](https://arxiv.org/abs/2106.14806)
 
 as well as a general framework to ensemble any Bayesian algorithm ("MultiX").
 
