@@ -80,7 +80,7 @@ pip install jax==0.4.1 jaxlib==0.4.1+cuda11.cudnn82 -f https://storage.googleapi
 pip install tensorflow tensorflow_datasets
 pip install dm-haiku
 ```
-Finally, you need to download the HMC samples from Izmailow et al. with `gsutil`:
+Finally, you need to download the HMC samples that where made available by Izmailow et al. with `gsutil`:
 ```
 gsutil -m cp -r gs://gresearch/bnn-posteriors/v1/hmc/cifar10/ ./data/Wilson/
 ```
@@ -96,3 +96,9 @@ The experiment directories also contain Jupyter Notebooks to query the results f
 
 For UCI, you only need to run `python3 uci.py uci.yaml`, as this script also fits the Laplace approximations and evaluates MultiX.
 For PovertyMap-wilds, the `eval_ensembles` script is also not required as the main script also trains the ensembles.
+
+## License
+The `google-bnn-hmc` folder has been copied from https://github.com/google-research/google-research/tree/master/bnn_hmc.
+This code is licensed under the Apache-2.0 license (see https://github.com/google-research/google-research/tree/master).
+
+The `mnist-c` submodule is licensed under the Apache-2.0 license.
