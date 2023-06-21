@@ -1,0 +1,194 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4"
+job-name: "rxrx1"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 4000
+time: 800
+sbatch_args:
+  gres: "gpu:1"
+sh_lines:
+  - "mkdir -p $TMP/data/wilds"
+  - "tar -C $TMP/data/wilds/ -xvzf $(ws_find data-ssd)/data/wilds/rxrx1_v1.0.tgz"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 6
+reps_per_job: 1
+reps_in_parallel: 1
+
+# Train: 40612 datapoints
+# Test (OOD): 34432 datapoints
+
+params:
+  batch_size: 75
+  # data_path: "$TMP/data/"
+  data_path: "../../data/"
+  epochs: 90
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  eval_while_train: True
+  disable_wandb: False
+  subsample: 0
+  test_subsample: 0
+  train_on_val: False
+  static_bn: True
+  seed_offset: 0
+  scheduler_warmup_steps: 5415 # From the wilds repo; corresponds to 10 epochs given a batch size of 75
+  share_file_system: False
+
+---
+name: "MAP"
+params:
+  model: "map"
+  members: 1
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.00001
+
+---
+name: "MCD_p_0.2"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.2
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.00001
+
+---
+name: "MCD_p_0.1"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.1
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.00001
+
+---
+name: "SWAG"
+params:
+  model: "swag"
+  members: 1
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.00001
+  swag:
+    update_interval: 630 # 35 * 540 / 30
+    start_epoch: 40
+    deviation_samples: 30
+
+---
+name: "BBB"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  use_amp: False
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    #kl_rescaling: 0.2
+    dataset_size: 40612
+
+---
+name: "BBB_prior0.5"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 0.5
+  use_amp: False
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    #kl_rescaling: 0.2
+    dataset_size: 40612
+
+---
+name: "BBB_prior0.1"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 0.1
+  use_amp: False
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    #kl_rescaling: 0.2
+    dataset_size: 40612
+
+---
+name: "BBB_kl_0.2"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  use_amp: False
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 0.2
+    dataset_size: 40612
+
+---
+name: "Rank1"
+params:
+  model: "rank1"
+  members: 1
+  prior_std: 1.0
+  use_amp: False
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  rank1:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 40612
+    components: 5
+    l2_scale: 0.00001
+
+---
+name: "iVON_ll"
+params:
+  model: "ll_ivon"
+  members: 1
+  use_amp: False
+  ivon:
+    lr: 0.0001
+    prior_prec: 100
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 40612
+  deterministic_optimizer:
+    lr: 0.0001
+    weight_decay: 0.00001
+
+---
+name: "SVGD"
+params:
+  model: "svgd"
+  members: 1
+  use_amp: False
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  svgd:
+    particle_count: 5
+    l2_reg: 0.00001
+    dataset_size: 40612
+    kernel_grad_scale: 1.0

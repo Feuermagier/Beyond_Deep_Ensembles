@@ -1,0 +1,3 @@
+[submodule "mnist-c"]
+	path = mnist-c
+	url = https://github.com/google-research/mnist-c

@@ -1,0 +1,58 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4"
+job-name: "iwildcam"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 4000
+time: 1000
+sbatch_args:
+  gres: "gpu:1"
+sh_lines:
+  - "mkdir -p $TMP/data/wilds"
+  - "tar -C $TMP/data/wilds/ -xvzf $(ws_find data-ssd)/data/wilds/iwildcam_v2.0.tgz"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 6
+reps_per_job: 1
+reps_in_parallel: 1
+
+# Train: 129809 datapoints
+# Test (OOD): 42791 datapoints
+
+params:
+  batch_size: 16
+  data_path: "$TMP/data/"
+  #data_path: "../../data/"
+  epochs: 12
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  eval_while_train: True
+  disable_wandb: False
+  subsample: 0
+  test_subsample: 0
+  train_on_val: False
+  static_bn: True
+  seed_offset: 0
+
+---
+name: "iVON_ll"
+params:
+  model: "ll_ivon"
+  members: 1
+  use_amp: False
+  ivon:
+    lr: 0.00003
+    prior_prec: 100
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 129809
+  deterministic_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0

@@ -1,0 +1,260 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "single"
+job-name: "uci"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 2000
+time: 400
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 1
+reps_per_job: 1
+reps_in_parallel: 1
+
+params:
+  allow_cuda: False
+  batch_size: 32
+  eval_samples: 1000
+  disable_wandb: False
+  normalize: True
+  learn_var: True
+  std_init: 0.5
+  val_percentage: 1.0
+  standard_split_reps: 10
+  gap: True
+  plain: True
+
+list:
+  dataset: ["energy", "housing", "concrete", "wine"]
+  in_dim: [8, 13, 8, 11]
+  hpo: [True, True, True, True]
+
+# All values that are optimized by HPO are set to the corresponding values for 'power/houseelectric', as we don't do HPO on those
+
+---
+name: "MAP"
+params:
+  model: "map"
+  members: 1
+  epochs: 20 # HP
+  optimizer:
+      base:
+          lr: 0.001 # HP
+          weight_decay: 0.0001 # HP
+  variance_optimizer:
+      lr: 0.001
+
+---
+name: "DeepEnsemble"
+params:
+  model: "map"
+  members: 5
+  epochs: 20 # HP
+  optimizer:
+      base:
+          lr: 0.001 # HP
+          weight_decay: 0.0001 # HP
+  variance_optimizer:
+      lr: 0.001
+
+---
+name: "Laplace"
+params:
+  model: "laplace"
+  members: 1
+  epochs: 20 # HP
+  ll_hessian: "full"
+  optimizer:
+      base:
+          lr: 0.001 # HP
+          weight_decay: 0.0001 # HP
+  variance_optimizer:
+      lr: 0.001
+
+---
+name: "MultiLaplace"
+params:
+  model: "laplace"
+  members: 5
+  epochs: 20 # HP
+  ll_hessian: "full"
+  optimizer:
+      base:
+          lr: 0.001 # HP
+          weight_decay: 0.0001 # HP
+  variance_optimizer:
+      lr: 0.001
+
+---
+name: "MCD"
+params:
+  model: "mcd"
+  members: 1
+  epochs: 20 # HP
+  dropout_p: 0.2 # HP
+  optimizer:
+      base:
+          lr: 0.001 # HP
+          weight_decay: 0.0001 # HP
+  variance_optimizer:
+      lr: 0.001
+
+---
+name: "MultiMCD"
+params:
+  model: "mcd"
+  members: 5
+  epochs: 20 # HP
+  dropout_p: 0.2 # HP
+  optimizer:
+      base:
+          lr: 0.001 # HP
+          weight_decay: 0.0001 # HP
+  variance_optimizer:
+      lr: 0.001
+---
+name: "SWAG"
+params:
+  model: "swag"
+  members: 1
+  epochs: 20 # HP
+  optimizer:
+    base:
+      lr: 0.001 # HP
+      weight_decay: 0.0001 # HP
+    swag:
+      start_epoch: 10 # HP
+      update_interval: 683093 # HP
+      deviation_samples: 30 # HP
+  variance_optimizer:
+    lr: 0.001
+
+---
+name: "MultiSWAG"
+params:
+  model: "swag"
+  members: 5
+  epochs: 20 # HP
+  optimizer:
+    base:
+      lr: 0.001 # HP
+      weight_decay: 0.0001 # HP
+    swag:
+      start_epoch: 10 # HP
+      update_interval: 683093 # HP
+      deviation_samples: 30 # HP
+  variance_optimizer:
+    lr: 0.001
+
+---
+name: "BBB"
+params:
+  model: "bbb"
+  members: 1
+  epochs: 20 # HP
+  prior_std: 1.0 # HP
+  optimizer:
+    base:
+      lr: 0.001 # HP
+      weight_decay: 0.0
+    bbb:
+      mc_samples: 5
+      kl_rescaling: 1.0 # HP
+      dataset_size: 0 # Set by the script
+  variance_optimizer:
+    lr: 0.001
+
+---
+name: "MultiBBB"
+params:
+  model: "bbb"
+  members: 5
+  epochs: 20 # HP
+  prior_std: 1.0 # HP
+  optimizer:
+    base:
+      lr: 0.001 # HP
+      weight_decay: 0.0
+    bbb:
+      mc_samples: 5
+      kl_rescaling: 1.0 # HP
+      dataset_size: 0 # Set by the script
+  variance_optimizer:
+    lr: 0.001
+
+---
+name: "BBB_fixed_kl"
+params:
+  model: "bbb_fixed_kl"
+  members: 1
+  epochs: 20 # HP
+  prior_std: 1.0 # HP
+  optimizer:
+    base:
+      lr: 0.001 # HP
+      weight_decay: 0.0
+    bbb:
+      mc_samples: 5
+      kl_rescaling: 1.0
+      dataset_size: 0 # Set by the script
+  variance_optimizer:
+    lr: 0.001
+
+---
+name: "Rank1"
+params:
+  model: "rank1"
+  members: 1
+  epochs: 20 # HP
+  prior_std: 1.0
+  optimizer:
+    base:
+      lr: 0.001 # HP
+      weight_decay: 0.0
+    rank1:
+      mc_samples: 5
+      kl_rescaling: 1.0
+      dataset_size: 0 # Set by the script
+      components: 5
+      l2_scale: 0.1 #HP
+  variance_optimizer:
+    lr: 0.001
+
+---
+name: "SVGD"
+params:
+  model: "svgd"
+  members: 1
+  epochs: 20 # HP
+  optimizer:
+    base:
+      lr: 0.001 # HP
+      weight_decay: 0
+    svgd:
+      particle_count: 5
+      l2_reg: 0.01 # HP
+      dataset_size: 269038 # Set by the script
+      kernel_grad_scale: 1.0
+  variance_optimizer:
+    lr: 0.001
+
+---
+name: "iVON"
+params:
+  model: "ivon"
+  members: 1
+  epochs: 20 # HP
+  optimizer:
+    ivon:
+      lr: 0.001 # HP
+      prior_prec: 1.0 # HP
+      dataset_size: 269038 # Set by the script
+      damping: 0.001
+      mc_samples: 5
+  variance_optimizer:
+    lr: 0.001

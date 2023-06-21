@@ -1,0 +1,90 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4_a100"
+job-name: "civil"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 4000 # 127500 MB total (~ 125 GB)
+time: 90
+sbatch_args:
+  gres: "gpu:1"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 5
+reps_per_job: 1
+reps_in_parallel: 1
+
+# Train: 269038 datapoints
+# Val: 45180 datapoints
+# Test: 133782 datapoints
+
+params:
+  batch_size: 16
+  data_path: "../../data/"
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  disable_wandb: False
+  subsample: 0
+  test_subsample: 0
+  train_all_layers: True
+  share_file_system: False
+
+---
+name: "DeepEnsemble_wd_1e-4"
+params:
+  model: "map"
+  members: 4
+  run_name: "MAP_wd_1e-4"
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "MultiMCD"
+params:
+  model: "mcd"
+  members: 4
+  run_name: "MCD"
+  ll_dropout_p: 0.2
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "MultiBBB"
+params:
+  model: "bbb"
+  members: 4
+  prior_std: 1.0
+  run_name: "BBB"
+  use_amp: False
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 269038
+
+---
+name: "MultiiVON_LL"
+params:
+  model: "ll_ivon"
+  run_name: "iVON_LL"
+  members: 5
+  use_amp: False
+  ivon:
+    lr: 0.00001
+    prior_prec: 500
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 269038
+  transformer_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01

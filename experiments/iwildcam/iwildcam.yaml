@@ -1,0 +1,241 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4"
+job-name: "iwildcam"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 4000
+time: 600
+sbatch_args:
+  gres: "gpu:1"
+sh_lines:
+  - "mkdir -p $TMP/data/wilds"
+  - "tar -C $TMP/data/wilds/ -xvzf $(ws_find data-ssd)/data/wilds/iwildcam_v2.0.tgz"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 3
+reps_per_job: 1
+reps_in_parallel: 1
+
+# Train: 129809 datapoints
+# Test (OOD): 42791 datapoints
+
+params:
+  batch_size: 16
+  # data_path: "$TMP/data/"
+  data_path: "../../data/"
+  epochs: 12
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  eval_while_train: True
+  disable_wandb: False
+  subsample: 0
+  test_subsample: 0
+  train_on_val: False
+  static_bn: True
+  seed_offset: 0
+
+# lr and weight decay values are based on the results in https://worksheets.codalab.org/worksheets/0x036017edb3c74b0692831fadfe8cbf1b (WILDS original)
+
+---
+name: "MAP_more"
+params:
+  model: "map"
+  members: 1
+  seed_offset: 3
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+
+---
+name: "MCD_p_0.1_more"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.1
+  seed_offset: 3
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+
+---
+name: "MCD_p_0.2"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.2
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+
+---
+name: "MCD_p_0.1"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.1
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+
+---
+name: "SWAG"
+params:
+  model: "swag"
+  members: 1
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  swag:
+    update_interval: 1622
+    start_epoch: 6
+    deviation_samples: 30
+
+---
+name: "LL_SWAG"
+params:
+  model: "swag_ll"
+  members: 1
+  use_amp: False
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  swag:
+    update_interval: 1622
+    start_epoch: 6
+    deviation_samples: 30
+  deterministic_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+
+---
+name: "SWAG_more"
+params:
+  model: "swag"
+  members: 1
+  seed_offset: 3
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  swag:
+    update_interval: 1622
+    start_epoch: 6
+    deviation_samples: 30
+
+
+---
+name: "BBB"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 129809
+
+---
+name: "BBB_more"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 129809
+
+---
+name: "BBB_full"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  all_layers_bbb: True
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 129809
+
+---
+name: "Rank1"
+params:
+  model: "rank1"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  rank1:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 129809
+    components: 5
+    l2_scale: 0.0 # same as weight decay
+
+---
+name: "iVON"
+params:
+  model: "ivon"
+  members: 1
+  use_amp: False
+  epochs: 20
+  batch_size: 64
+  ivon:
+    lr: 0.00003
+    prior_prec: 100
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 129809
+
+---
+name: "SVGD"
+params:
+  model: "svgd"
+  members: 1
+  use_amp: False
+  use_checkpoint: "0_9"
+  checkpoint_epochs: 10
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0
+  svgd:
+    particle_count: 5
+    l2_reg: 0.0
+    dataset_size: 129809
+    kernel_grad_scale: 1.0
+
+---
+name: "SVGD_LL"
+params:
+  model: "ll_svgd"
+  members: 1
+  use_amp: False
+  use_checkpoint: "0_6"
+  checkpoint_epochs: 7
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0
+  svgd:
+    particle_count: 5
+    l2_reg: 0.0
+    dataset_size: 129809
+    kernel_grad_scale: 1.0
+  deterministic_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0

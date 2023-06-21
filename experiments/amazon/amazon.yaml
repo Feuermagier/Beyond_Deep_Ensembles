@@ -1,0 +1,190 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4_a100"
+job-name: "amazon"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 8000
+time: 1400 # ~24h
+sbatch_args:
+  gres: "gpu:1"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 5
+reps_per_job: 1
+reps_in_parallel: 1
+
+# Train: 245502 datapoints
+# Test: 100050 datapoints
+
+params:
+  batch_size: 8
+  data_path: "../../data/"
+  epochs: 5
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  eval_while_train: True
+  disable_wandb: False
+  subsample: 0
+  test_subsample: 0
+  train_all_layers: True
+
+---
+name: "MAP"
+params:
+  model: "map"
+  members: 1
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "MCD_p0.2"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.2
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "MCD_p0.2_LL"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.2
+  last_layer_mcd: True
+  eval_only: True
+  load_path: "results/MCD_p0.2/log/"
+  load_model: "mcd"
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "SWAG"
+params:
+  model: "swag"
+  members: 1
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+  swag:
+    update_interval: 2040
+    start_epoch: 3
+    deviation_samples: 30
+
+---
+name: "SWAG_LL"
+params:
+  model: "ll_swag"
+  members: 1
+  use_amp: False
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+  swag:
+    update_interval: 2040
+    start_epoch: 3
+    deviation_samples: 30
+  transformer_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "SWAG_start_later"
+params:
+  model: "swag"
+  members: 1
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+  swag:
+    update_interval: 1020
+    start_epoch: 4
+    deviation_samples: 30
+
+---
+name: "BBB"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  use_amp: False
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 245502
+
+---
+name: "Rank1"
+params:
+  model: "rank1"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0
+  rank1:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 245502
+    components: 5
+    l2_scale: 0.01
+
+---
+name: "iVON"
+params:
+  model: "ivon"
+  members: 1
+  use_amp: False # Diverges with AMP
+  ivon:
+    lr: 0.00001
+    prior_prec: 10
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 245502
+
+---
+name: "iVON_LL"
+params:
+  model: "ll_ivon"
+  members: 1
+  use_amp: False
+  ivon:
+    lr: 0.00001
+    prior_prec: 500
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 245502
+  transformer_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "SVGD"
+params:
+  model: "svgd"
+  members: 1
+  use_amp: False
+  checkpoint_epochs: 3
+  use_checkpoint: "0_2"
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0
+  svgd:
+    particle_count: 5
+    l2_reg: 0.01
+    dataset_size: 245502
+    kernel_grad_scale: 1.0

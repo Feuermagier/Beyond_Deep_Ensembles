@@ -1,0 +1,283 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4_a100"
+job-name: "civil"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 16
+mem-per-cpu: 4000 # 127500 MB total (~ 125 GB)
+time: 1500
+sbatch_args:
+  gres: "gpu:1"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 5
+reps_per_job: 1
+reps_in_parallel: 1
+
+# Train: 269038 datapoints
+# Val: 45180 datapoints
+# Test: 133782 datapoints
+
+params:
+  batch_size: 16
+  data_path: "../../data/"
+  epochs: 5
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  eval_while_train: True
+  disable_wandb: False
+  subsample: 0
+  test_subsample: 0
+  train_all_layers: True
+  share_file_system: False
+
+---
+name: "MAP_wd_1e-4"
+params:
+  model: "map"
+  members: 1
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0001
+
+---
+name: "DeepEnsemble"
+params:
+  model: "map"
+  members: 5
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "MCD"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.2  # Affects only the classification head; value is the same for all algos
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "MultiMCD"
+params:
+  model: "mcd"
+  members: 5
+  ll_dropout_p: 0.3
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "SWAG"
+params:
+  model: "swag"
+  members: 1
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+  swag:
+    update_interval: 3300
+    start_epoch: 3
+    deviation_samples: 10 # Storage requirement becomes immense
+
+---
+name: "MultiSWAG"
+params:
+  model: "swag"
+  members: 5
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+  swag:
+    update_interval: 1120
+    start_epoch: 3
+    deviation_samples: 30
+
+---
+name: "BBB"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 269038
+
+---
+name: "BBB_prior_0.1"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 0.1
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 269038
+
+---
+name: "BBB_prior_0.01"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 0.01
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 269038
+
+---
+name: "BBB_kl_rescaled"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 0.5
+    dataset_size: 269038
+
+---
+name: "MultiBBB"
+params:
+  model: "bbb"
+  members: 5
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00005
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 269038
+
+---
+name: "Rank1"
+params:
+  model: "rank1"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0.0
+  rank1:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 269038
+    components: 5
+    l2_scale: 0.01
+
+---
+name: "MultiRank1"
+params:
+  model: "rank1"
+  members: 5
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.00005
+    weight_decay: 0.0
+  rank1:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 269038
+    components: 5
+    l2_scale: 0.01
+
+---
+name: "iVON"
+params:
+  model: "ivon"
+  members: 1
+  use_amp: False # Diverges with AMP
+  ivon:
+    lr: 0.00001
+    prior_prec: 10
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 269038
+
+---
+name: "iVON_LL"
+params:
+  model: "ll_ivon"
+  members: 1
+  use_amp: False
+  ivon:
+    lr: 0.00001
+    prior_prec: 500
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 269038
+  transformer_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01
+
+---
+name: "MultiiVON"
+params:
+  model: "ivon"
+  members: 5
+  use_amp: False # Diverges with AMP
+  ivon:
+    lr: 0.00005
+    prior_prec: 10
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 269038
+
+---
+name: "SVGD"
+params:
+  model: "svgd"
+  members: 1
+  use_amp: False # Diverges with AMP
+  use_checkpoint: "0_1"
+  checkpoint_epochs: 2
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0
+  svgd:
+    particle_count: 5
+    l2_reg: 0.01
+    dataset_size: 269038
+    kernel_grad_scale: 1.0
+
+---
+name: "SVGD_LL"
+params:
+  model: "ll_svgd"
+  members: 1
+  use_amp: False
+  base_optimizer:
+    lr: 0.00001
+    weight_decay: 0
+  svgd:
+    particle_count: 5
+    l2_reg: 0.01
+    dataset_size: 269038
+    kernel_grad_scale: 1.0
+  transformer_optimizer:
+    lr: 0.00001
+    weight_decay: 0.01

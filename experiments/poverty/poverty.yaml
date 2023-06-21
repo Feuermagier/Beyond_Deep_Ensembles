@@ -1,0 +1,215 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4"
+job-name: "poverty"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 4000
+time: 1200
+sbatch_args:
+  gres: "gpu:1"
+sh_lines:
+  - "mkdir -p $TMP/data/wilds"
+  - "tar -C $TMP/data/wilds/ -xvzf $(ws_find data-ssd)/data/wilds/poverty_v1.1.tgz"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 1
+reps_per_job: 1
+reps_in_parallel: 1
+
+params:
+  batch_size: 64
+  data_path: "../../data/"
+  # data_path: "$TMP/data/"
+  epochs: 200 # typically reduced to 100
+  use_amp: True
+  eval_samples: 10
+  train_on_val: False
+  disable_wandb: False
+  eval_while_train: True
+  subsample: 0
+  test_subsample: 0
+  share_file_system: False
+  init_std: 0.1
+  learn_var: False
+  lr_decay: 0.96
+
+list:
+  fold: ["A", "B", "C", "D", "E"]
+
+---
+name: "MAP"
+params:
+  model: "map"
+  members: 1
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "DeepEnsemble"
+params:
+  model: "map"
+  members: 5
+  epochs: 100
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "MCD"
+params:
+  model: "mcd"
+  members: 1
+  dropout_p: 0.1
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "MultiMCD"
+params:
+  model: "mcd"
+  members: 5
+  epochs: 100
+  dropout_p: 0.1
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "SWAG"
+params:
+  model: "swag"
+  epochs: 100
+  members: 1
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  swag:
+    deviation_samples: 30
+    start_epoch: 50
+    update_interval: 255
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "MultiSWAG"
+params:
+  model: "swag"
+  epochs: 100
+  members: 5
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  swag:
+    deviation_samples: 30
+    start_epoch: 50
+    update_interval: 255
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "BBB"
+params:
+  model: "bbb"
+  epochs: 100
+  members: 1
+  use_amp: False
+  prior_std: 1.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 0.2
+    dataset_size: 10000
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "MultiBBB"
+params:
+  model: "bbb"
+  epochs: 100
+  members: 5
+  use_amp: False
+  prior_std: 1.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 0.2
+    dataset_size: 10000
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "Rank1"
+params:
+  model: "rank1"
+  epochs: 100
+  members: 1
+  use_amp: False
+  prior_std: 1.0
+  rank1:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 10000
+    components: 5
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "SVGD"
+params:
+  model: "svgd"
+  epochs: 100
+  members: 1
+  use_amp: False
+  svgd:
+    particle_count: 5
+    l2_reg: 0.0
+    dataset_size: 10000
+    kernel_grad_scale: 1.0
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  var_optimizer:
+    lr: 0.0
+
+---
+name: "iVON"
+params:
+  model: "ivon"
+  members: 1
+  use_amp: False
+  epochs: 100
+  ivon:
+    lr: 0.00001
+    prior_prec: 500
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 10000
+
+# grid:
+#   fold: ["A"]
+#   ivon:
+#     prior_prec: [500, 100, 10, 1]

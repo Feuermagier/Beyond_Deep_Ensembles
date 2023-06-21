@@ -1,0 +1,180 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4"
+job-name: "fmow"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 8
+mem-per-cpu: 4000
+time: 600
+sbatch_args:
+  gres: "gpu:1"
+sh_lines:
+  - "mkdir -p $TMP/data/wilds"
+  - "tar -C $TMP/data/wilds/ -xvzf $(ws_find data-ssd)/data/wilds/fmow_v1.1.tgz"
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 6
+reps_per_job: 1
+reps_in_parallel: 1
+
+# Train: 76863 datapoints
+# Test (OOD): 22108 datapoints
+
+params:
+  batch_size: 64
+  # data_path: "$TMP/data/"
+  data_path: "../../data/"
+  epochs: 50
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  eval_while_train: True
+  disable_wandb: False
+  subsample: 0
+  test_subsample: 0
+  train_on_val: False
+  static_bn: True
+  seed_offset: 0
+  lr_decay: 0.96
+
+---
+name: "MAP"
+params:
+  model: "map"
+  members: 1
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+
+---
+name: "MCD_p_0.2"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.2
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+
+---
+name: "MCD_p_0.1"
+params:
+  model: "mcd"
+  members: 1
+  ll_dropout_p: 0.1
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+
+---
+name: "SWAG"
+params:
+  model: "swag"
+  members: 1
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  swag:
+    update_interval: 990
+    start_epoch: 25
+    deviation_samples: 30
+
+---
+name: "SWAG_ll"
+params:
+  model: "swag_ll"
+  members: 1
+  use_amp: False
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  swag:
+    update_interval: 990
+    start_epoch: 25
+    deviation_samples: 30
+  deterministic_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+
+---
+name: "BBB"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 76863
+
+---
+name: "BBB_kl_0.2"
+params:
+  model: "bbb"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  bbb:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 76863
+    kl_rescaling: 0.2
+
+---
+name: "Rank1"
+params:
+  model: "rank1"
+  members: 1
+  prior_std: 1.0
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  rank1:
+    mc_samples: 2
+    kl_rescaling: 1.0
+    dataset_size: 76863
+    components: 5
+    l2_scale: 0.0 # same as weight decay
+
+---
+name: "iVON_ll"
+params:
+  model: "ll_ivon"
+  members: 1
+  use_amp: False
+  ivon:
+    lr: 0.0001
+    prior_prec: 500
+    damping: 0.001
+    augmentation: 1
+    mc_samples: 2
+    dataset_size: 76863
+  deterministic_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+
+---
+name: "SVGD"
+params:
+  model: "svgd"
+  members: 1
+  use_amp: False
+  use_checkpoint: "0_40"
+  checkpoint_epochs: 40
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0
+  svgd:
+    particle_count: 5
+    l2_reg: 0.0
+    dataset_size: 76863
+    kernel_grad_scale: 1.0

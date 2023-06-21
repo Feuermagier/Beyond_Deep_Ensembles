@@ -1,0 +1,161 @@
+---
+# Slurm config
+name: "SLURM"
+partition: "gpu_4"
+job-name: "camelyon"
+num_parallel_jobs: 120
+ntasks: 1
+cpus-per-task: 16
+mem-per-cpu: 8000 # 127500 MB total (~ 125 GB)
+time: 400
+sbatch_args:
+  gres: "gpu:1"
+  container-image: ./../../../bdl_container.sqsh
+  container-mounts: ./../..:/work,/etc/slurm/task_prolog:/etc/slurm/task_prolog
+  container-workdir: /work/experiments/camelyon
+  container-writable: ""
+
+---
+name: "DEFAULT"
+path: "results"
+repetitions: 1
+reps_per_job: 1
+reps_in_parallel: 1
+
+params:
+  batch_size: 32
+  #data_path: "../../data/"
+  data_path: "/mnt/d/Uni/Bachelorarbeit/linux/data"
+  epochs: 5
+  use_amp: True
+  eval_samples: 10
+  ece_bins: 10
+  train_on_val: False
+  disable_wandb: True
+  eval_while_train: True
+  subsample: 10
+  test_subsample: 1
+  share_file_system: False
+
+---
+name: "MAP"
+params:
+  model: "map"
+  members: 1
+  optimizer:
+    base:
+      lr: 0.001
+      momentum: 0.9
+      weight_decay: 0.01
+
+# ---
+# name: "DeepEnsemble"
+# params:
+#   model: "map"
+#   members: 5
+#   optimizer:
+#     base:
+#       lr: 0.001
+#       momentum: 0.9
+#       weight_decay: 0.01
+
+# ---
+# name: "MCD"
+# params:
+#   model: "mcd"
+#   members: 1
+#   dropout_p: 0.1
+#   optimizer:
+#     base:
+#       lr: 0.001
+#       momentum: 0.9
+#       weight_decay: 0.01
+
+# ---
+# name: "MultiMCD"
+# params:
+#   model: "mcd"
+#   members: 5
+#   dropout_p: 0.1
+#   optimizer:
+#     base:
+#       lr: 0.001
+#       momentum: 0.9
+#       weight_decay: 0.01
+
+# ---
+# name: "SWAG"
+# params:
+#   model: "swag"
+#   members: 1
+#   optimizer:
+#     base:
+#       lr: 0.001
+#       momentum: 0.9
+#       weight_decay: 0.01
+#     swag:
+#       update_interval: 1 # dataset size / (15 * batch_size)
+#       start_epoch: 1
+#       deviation_samples: 10
+
+# ---
+# name: "MultiSWAG"
+# params:
+#   model: "swag"
+#   members: 5
+#   optimizer:
+#     base:
+#       lr: 0.001
+#       momentum: 0.9
+#       weight_decay: 0.01
+#     swag:
+#       update_interval: 1 # dataset size / (15 * batch_size)
+#       start_epoch: 1
+#       deviation_samples: 10
+
+# ---
+# name: "BBB"
+# params:
+#   model: bbb
+#   members: 1
+#   prior_std: 1.0
+#   optimizer: 
+#     base: 
+#       lr: 0.001
+#       momentum: 0.9
+#       weight_decay: 0
+#     bbb: 
+#       dataset_size: 34912
+#       mc_samples: 2
+#       kl_rescaling: 1.0
+
+# ---
+# name: "Rank1"
+# params:
+#   model: rank1
+#   members: 1
+#   prior_std: 1.0
+#   optimizer: 
+#     base: 
+#       lr: 0.001
+#       momentum: 0.9
+#       weight_decay: 0
+#     rank1: 
+#       dataset_size: 3200
+#       mc_samples: 2
+#       kl_rescaling: 1.0
+#       components: 5
+
+# ---
+# name: "iVON"
+# params:
+#   model: ivon
+#   members: 1
+#   use_amp: False
+#   ivon:
+#     lr: 0.001
+#     prior_prec: 10
+#     damping: 0.001
+#     augmentation: 1
+#     mc_samples: 2
+#     dataset_size: 34912
