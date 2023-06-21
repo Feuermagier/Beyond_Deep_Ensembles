@@ -20,8 +20,8 @@ from src.algos.util import nll_loss
 from src.algos.laplace_approx import LaplaceApprox
 from src.log_mock import VoidLog
 
-from experiments.uci2.models import get_model, get_var_optimizer
-from experiments.uci2.data import UCIDataset, get_loader
+from experiments.uci.models import get_model, get_var_optimizer
+from experiments.uci.data import UCIDataset, get_loader
 
 def eval_model(model, config, device, split, gap_split):
     torch.manual_seed(42)
