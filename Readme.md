@@ -5,7 +5,8 @@
 
 This repository contains the algorithm implementation and evaluation code for the paper
 
-[_Beyond Deep Ensembles - A Large-Scale Evaluation of Bayesian Deep Learning under Distribution Shift_](https://arxiv.com/).
+[_Beyond Deep Ensembles - A Large-Scale Evaluation of Bayesian Deep Learning under Distribution Shift_](
+http://arxiv.org/abs/2306.12306).
 
 by [Florian Seligmann](https://github.com/Feuermagier), [Philipp Becker](https://alr.anthropomatik.kit.edu/21_72.php), [Michael Volpp](https://de.linkedin.com/in/michaelvolpp), and [Gerhard Neumann](https://alr.anthropomatik.kit.edu/21_65.php).
 
@@ -19,7 +20,7 @@ Please cite our work if you find it useful in your research:
 @article{seligmann2023bayes-eval,
     title = {Beyond Deep Ensembles - A Large-Scale Evaluation of Bayesian Deep Learning under Distribution Shift},
     author = {Seligmann, Florian and Becker, Philipp and Volpp, Michael and Neumann, Gerhard},
-    journal = {arXiv preprint arXiv:},
+    journal = {arXiv preprint arXiv:2306.12306},
     year = {2023}
 }
 ```
