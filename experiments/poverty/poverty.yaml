@@ -209,7 +209,28 @@ params:
     mc_samples: 2
     dataset_size: 10000
 
-# grid:
-#   fold: ["A"]
-#   ivon:
-#     prior_prec: [500, 100, 10, 1]
+---
+name: "SNGP"
+params:
+  model: "sngp"
+  members: 1
+  epochs: 100
+  multisample: True
+  base_optimizer:
+    lr: 0.001
+    weight_decay: 0.0
+  var_optimizer:
+    lr: 0.0
+  spectral:
+    norm_bound: 6.0
+  sngp:
+    train_batch_size: 64
+    dataset_size: 10000
+    num_random_features: 1024
+    num_gp_features: -1
+    normalize_gp_features: True
+    ridge_penalty: 0.001
+    sampling_mode: "mc"
+    mean_field_factor: null
+    feature_scale: 1.0
+    rff_init_std: 1.0

@@ -3,7 +3,7 @@
 **TL;DR: We evaluate the generalization capability, calibration, and posterior approximation quality of many SOTA Bayesian deep learning algorithms on large-scale tasks, incorporating realistic distribution-shifted data from [WILDS](https://wilds.stanford.edu/). This repository contains robust PyTorch implementations of the algorithms and supporting evaluation code.**
 ---
 
-This repository contains the algorithm implementation and evaluation code for the paper
+This repository contains the algorithm implementation and evaluation code for the NeurIPS 2023 paper
 
 [_Beyond Deep Ensembles: A Large-Scale Evaluation of Bayesian Deep Learning under Distribution Shift_](
 http://arxiv.org/abs/2306.12306).
@@ -24,6 +24,7 @@ Please cite our work if you find it useful in your research:
     year = {2023}
 }
 ```
+If you have any question, feel free to open an issue in this repository!
 
 
 ## Implemented Algorithms
@@ -33,10 +34,11 @@ We provide PyTorch code for the following algorithms:
 - [Deep Ensembles](https://arxiv.org/abs/1612.01474)
 - [Bayes By Backprop](https://arxiv.org/abs/1505.05424) (BBB)
 - [Rank-1 Variational Inference](https://arxiv.org/abs/2005.07186) (Rank-1 VI)
-- [Stochastic Weight Averaging - Gaussian](https://arxiv.org/abs/1902.02476) (SWAG)
+- [Stochastic Weight Averaging - Gaussian (SWAG)](https://arxiv.org/abs/1902.02476) (SWAG)
 - [Stein Variational Gradient Descent](https://arxiv.org/abs/1608.04471) (SVGD)
-- [Improved Variational Online-Newton](https://arxiv.org/abs/2002.10060) (iVON)
+- [Improved Variational Online-Newton (iVON)](https://arxiv.org/abs/2002.10060) (iVON)
 - [Laplace Approximation](https://arxiv.org/abs/2106.14806)
+- [Spectrally-Normalized Gaussian Processes (SNGP)](https://arxiv.org/abs/2006.10108)
 
 as well as a general framework to ensemble any Bayesian algorithm ("MultiX").
 

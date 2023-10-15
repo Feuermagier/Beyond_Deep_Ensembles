@@ -12,13 +12,14 @@ from src.algos.pp import MAPOptimizer
 from src.algos.ivorn import iVONOptimizer
 from src.algos.svgd import SVGDOptimizer
 from src.algos.dropout import patch_dropout, FixableDropout
-from src.architectures.bert import BertClassifier
+from src.algos.kernel.sngp import SNGPWrapper, SNGPOptimizer
+from src.algos.kernel.base import spectrally_normalize_module
 from src.algos.util import reset_model_params
 
 def get_model(model, config, device):
     if model == "map":
         model_fn = build_map
-    if model == "laplace":
+    elif model == "laplace":
         model_fn = build_map # Fitting Laplace post-hoc
     elif model == "swag":
         model_fn = build_swag
@@ -32,6 +33,8 @@ def get_model(model, config, device):
         model_fn = build_rank1
     elif model == "svgd":
         model_fn = build_svgd
+    elif model == "sngp":
+        model_fn = build_sngp
     else:
         raise ValueError(f"Unknown model type '{model}'")
 
@@ -41,61 +44,62 @@ def build_ensemble(fn, config, device):
     return DeepEnsemble([fn(config, device) for _ in range(config["members"])])
 
 def build_map(config, device):
-    model = nn.Sequential(
-        ResNet20(32, 3, 10, "swish", "frn"),
-        nn.LogSoftmax(dim=1)
-    ).to(device)
+    model = _get_model(dict(), config, device)
     optimizer = MAPOptimizer(model.parameters(), torch.optim.SGD(model.parameters(), **config["base_optimizer"]))
     return model, optimizer
 
 def build_swag(config, device):
-    model = nn.Sequential(
-        ResNet20(32, 3, 10, "swish", "frn"),
-        nn.LogSoftmax(dim=1)
-    ).to(device)
+    model = _get_model(dict(), config, device)
     optimizer = SwagOptimizer(model.parameters(), torch.optim.SGD(model.parameters(), **config["base_optimizer"]), **config["swag"])
     return model, optimizer
 
 def build_mcd(config, device):
-    model = nn.Sequential(
-        ResNet20(32, 3, 10, "swish", "frn", dropout_p=config["p"]),
-        nn.LogSoftmax(dim=1)
-    ).to(device)
+    model = _get_model(dict(dropout_p=config["p"]), config, device)
     optimizer = MAPOptimizer(model.parameters(), torch.optim.SGD(model.parameters(), **config["base_optimizer"]))
     return model, optimizer
 
 def build_bbb(config, device):
     prior = GaussianPrior(0, config["prior_std"])
-    model = nn.Sequential(
-        ResNet20(32, 3, 10, "swish", "frn", variational=True, prior=prior),
-        nn.LogSoftmax(dim=1)
-    ).to(device)
+    model = _get_model(dict(variational=True, prior=prior), config, device)
     optimizer = BBBOptimizer(model.parameters(), torch.optim.SGD(model.parameters(), **config["base_optimizer"]), prior=prior, **config["bbb"])
     return model, optimizer
 
 def build_ivon(config, device):
-    model = nn.Sequential(
-        ResNet20(32, 3, 10, "swish", "frn"),
-        nn.LogSoftmax(dim=1)
-    ).to(device)
+    model = _get_model({}, config, device)
     optimizer = iVONOptimizer(model.parameters(), **config["ivon"])
     return model, optimizer
 
 def build_rank1(config, device):
     prior = GaussianPrior(0, config["prior_std"])
-    model = nn.Sequential(
-        ResNet20(32, 3, 10, "swish", "frn", variational=True, prior=prior, rank1=True, components=config["components"]),
-        nn.LogSoftmax(dim=1)
-    ).to(device)
+    model = _get_model(dict(variational=True, prior=prior, rank1=True, components=config["components"]), config, device)
     optimizer = BBBOptimizer(model.parameters(), torch.optim.SGD(model.parameters(), **config["base_optimizer"]), prior=prior, **config["bbb"])
     return model, optimizer
 
 def build_svgd(config, device):
-    model = nn.Sequential(
-        ResNet20(32, 3, 10, "swish", "frn"),
-        nn.LogSoftmax(dim=1)
-    ).to(device)
+    model = _get_model({}, config, device)
     def reset_model():
         reset_model_params(model)
     optimizer = SVGDOptimizer(model.parameters(), reset_model, torch.optim.SGD(model.parameters(), **config["base_optimizer"]), **config["svgd"])
     return model, optimizer
+
+def build_sngp(config, device):
+    model = ResNet20(32, 3, 10, "swish", "frn")
+    featurizer_out_size = model.model[-1].in_features
+    model.model[-1] = nn.Identity()
+    spectrally_normalize_module(model, norm_bound=config["spectral"]["norm_bound"])
+    print(model)
+    sngp = SNGPWrapper(
+        model,
+        nn.LogSoftmax(dim=1),
+        outputs=10,
+        num_deep_features=featurizer_out_size,
+        **config["sngp"]
+    ).to(device)
+    optimizer = SNGPOptimizer(sngp, torch.optim.SGD(model.parameters(), **config["base_optimizer"]))
+    return sngp, optimizer
+
+def _get_model(resnet_params, config, device) -> nn.Module:
+    return torch.compile(nn.Sequential(
+        ResNet20(32, 3, 10, "swish", "frn", **resnet_params),
+        nn.LogSoftmax(dim=1)
+    ).to(device), disable=not config["use_compile"])

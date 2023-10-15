@@ -239,3 +239,24 @@ params:
   deterministic_optimizer:
     lr: 0.00003
     weight_decay: 0.0
+
+---
+name: "SNGP"
+params:
+  model: "sngp"
+  members: 1
+  spectral: 
+    norm_bound: 6.0
+  base_optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+  sngp:
+    train_batch_size: 16
+    dataset_size: 129809
+    num_random_features: 1024
+    num_gp_features: 128
+    normalize_gp_features: True
+    ridge_penalty: 0.001
+    mean_field_factor: 0.25
+    feature_scale: 0.5
+    rff_init_std: 1.0

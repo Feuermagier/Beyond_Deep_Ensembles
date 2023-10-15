@@ -9,6 +9,8 @@ from src.algos.pp import MAPOptimizer
 from src.algos.ivorn import iVONOptimizer
 from src.algos.svgd import SVGDOptimizer
 from src.algos.dropout import patch_dropout
+from src.algos.kernel.sngp import SNGPWrapper, SNGPOptimizer
+from src.algos.kernel.base import spectrally_normalize_module
 from src.architectures.bert import BertClassifier
 from src.algos.util import reset_model_params
 
@@ -35,6 +37,8 @@ def get_model(model, config, device):
         model_fn = build_ll_ivon
     elif model == "laplace_base":
         model_fn = build_laplace_base
+    elif model == "sngp":
+        model_fn = build_sngp
     else:
         raise ValueError(f"Unknown model type '{model}'")
     
@@ -134,6 +138,25 @@ def build_ll_ivon(config, device):
     transformer_optimizer = torch.optim.Adam(get_params(model, config, "transformer"), **config["transformer_optimizer"])
     optimizer = LastLayerBayesianOptimizer(head_optimizer, transformer_optimizer)
     return model, optimizer
+
+def build_sngp(config, device):
+    if config["with_head"]:
+        model = nn.Sequential(
+            BertClassifier("no_out_projection", N_CLASSES),
+        )
+        spectrally_normalize_module(model[0].classifier, norm_bound=config["spectral"]["norm_bound"])
+    else:
+        model = nn.Sequential(
+            BertClassifier("no_classifier", N_CLASSES),
+        )
+    if config["regularize_all"]:
+        spectrally_normalize_module(model, norm_bound=config["spectral"]["norm_bound"])
+    elif config["with_head"]:
+        spectrally_normalize_module(model[0].classifier, norm_bound=config["spectral"]["norm_bound"])
+
+    sngp = SNGPWrapper(model, nn.LogSoftmax(dim=1), outputs=N_CLASSES, num_deep_features=768, **config["sngp"]).to(device)
+    optimizer = SNGPOptimizer(sngp, torch.optim.Adam(sngp.parameters(), **config["base_optimizer"]))
+    return sngp, optimizer
 
 def get_params(model, config, subset=None):
     if subset is None or subset == "all":

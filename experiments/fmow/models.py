@@ -12,7 +12,8 @@ from src.algos.pp import MAPOptimizer
 from src.algos.ivorn import iVONOptimizer
 from src.algos.svgd import SVGDOptimizer
 from src.algos.dropout import patch_dropout, FixableDropout
-from src.architectures.bert import BertClassifier
+from src.algos.kernel.sngp import SNGPWrapper, SNGPOptimizer
+from src.algos.kernel.base import spectrally_normalize_module
 from src.algos.util import reset_model_params, patch_batchnorm
 
 DENSENET_OUT_DIMS = 1024
@@ -41,6 +42,8 @@ def get_model(model, config, device):
         model_fn = build_ll_ivon
     elif model == "laplace_base":
         model_fn = build_laplace_base
+    elif model == "sngp":
+        model_fn = build_sngp
     else:
         raise ValueError(f"Unknown model type '{model}'")
     
@@ -117,11 +120,23 @@ def build_ll_ivon(config, device):
     optimizer = LastLayerBayesianOptimizer(ll_optimizer, det_optimizer)
     return model, optimizer
 
+def build_sngp(config, device):
+    model = get_base_model(nn.Identity())
+    spectrally_normalize_module(model[0], norm_bound=config["spectral"]["norm_bound"])
+    sngp = SNGPWrapper(
+        model,
+        nn.LogSoftmax(dim=1),
+        outputs=N_CLASSES,
+        num_deep_features=DENSENET_OUT_DIMS,
+        **config["sngp"]
+    ).to(device)
+    optimizer = SNGPOptimizer(sngp, torch.optim.Adam(sngp.parameters(), **config["base_optimizer"]))
+    return sngp, optimizer
 
 def get_base_model(classification_head):
     model = densenet121(pretrained=True)
     model.classifier = classification_head
-    return nn.Sequential(
+    return torch.compile(nn.Sequential(
         model,
         nn.LogSoftmax(dim=1)
-    )
+    ))

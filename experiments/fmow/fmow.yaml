@@ -178,3 +178,24 @@ params:
     l2_reg: 0.0
     dataset_size: 76863
     kernel_grad_scale: 1.0
+
+---
+name: "SNGP"
+params:
+  model: "sngp"
+  members: 1
+  spectral: 
+    norm_bound: 6.0
+  base_optimizer:
+    lr: 0.0001
+    weight_decay: 0.0
+  sngp:
+    train_batch_size: 64
+    dataset_size: 76863
+    num_random_features: 1024
+    num_gp_features: 256
+    normalize_gp_features: False
+    ridge_penalty: 0.001
+    mean_field_factor: 20.0
+    feature_scale: 1.0
+    rff_init_std: 1.0

@@ -244,3 +244,29 @@ params:
     l2_scale: 0.0003
     components: 4
     kl_rescaling: 1.0
+
+---
+name: "SNGP"
+params:
+  model: "sngp"
+  members: 1
+  lr: 0.05 # lr scheduler...
+  eval_while_train: False
+  eval_samples: 1
+  base_optimizer:
+    lr: 0.05
+    weight_decay: 0.0003 # Uncertainty Baselines use L2 reg on CIFAR
+    momentum: 0.9
+    nesterov: True
+  spectral: 
+    norm_bound: 6.0
+  sngp:
+    train_batch_size: 128
+    dataset_size: 50000
+    num_random_features: 1024
+    num_gp_features: -1 # Don't project GP inputs
+    normalize_gp_features: False
+    ridge_penalty: 1.0
+    mean_field_factor: 20.0
+    feature_scale: 1.0 # Has a slightly different meaning than in the UB, cf https://github.com/google/edward2/blob/ccdb9bfb11fe713bc449f0e884b405f619f58059/edward2/tensorflow/layers/random_feature.py#L130
+    rff_init_std: 0.05

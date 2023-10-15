@@ -4,12 +4,16 @@ import torch.nn as nn
 from src.algos.util import GaussLayer, reset_model_params
 from src.algos.swag import SwagOptimizer
 from src.algos.bbb import BBBOptimizer, GaussianPrior
-from src.algos.ensemble import Ensemble, DeepEnsemble
+from src.algos.ensemble import DeepEnsemble
 from src.algos.pp import MAPOptimizer
 from src.algos.svgd import SVGDOptimizer
 from src.algos.ivorn import iVONOptimizer
+from src.algos.kernel.sngp import SNGPWrapper, SNGPOptimizer
+from src.algos.kernel.base import spectrally_normalize_module
 
 from src.architectures.resnet import ResNet18
+
+RESNET_OUT_DIMS = 512
 
 def get_var_optimizer(model, config):
     return torch.optim.SGD(model[-1].parameters(), **config["var_optimizer"])
@@ -31,6 +35,8 @@ def get_model(model, device, config):
         model_fn = build_svgd
     elif model == "ivon":
         model_fn = build_ivon
+    elif model == "sngp":
+        model_fn = build_sngp
     else:
         raise ValueError(f"Unknown model type '{model}'")
     
@@ -103,3 +109,16 @@ def build_ivon(config, device):
     ).to(device)
     optimizer = iVONOptimizer(model[0].parameters(), **config["ivon"])
     return model, optimizer
+
+def build_sngp(config, device):
+    model = ResNet18(224, 8, -1) # Set classes to -1 to omit the final linear layer
+    spectrally_normalize_module(model, norm_bound=config["spectral"]["norm_bound"])
+    sngp = SNGPWrapper(
+        model,
+        GaussLayer(torch.tensor(config["init_std"]), config["learn_var"]),
+        outputs=1,
+        num_deep_features=RESNET_OUT_DIMS,
+        **config["sngp"]
+    ).to(device)
+    optimizer = SNGPOptimizer(sngp, torch.optim.Adam(sngp.parameters(), **config["base_optimizer"]))
+    return sngp, optimizer
